@@ -54,3 +54,59 @@ Following is the Kalman filter recursive algorithm.
 
 ![](data/images/kalman-filter.png)
 
+Following is the *C++*(C++ 14 standands) implementation of Kalman filter. [Eigen](http://eigen.tuxfamily.org/dox/)(version 3.3.9) library was used to do matrices related operations.  
+
+```cpp
+// state vector
+Eigen::VectorXd x_;
+
+// state covariance matrix
+Eigen::MatrixXd P_;
+
+// state transition matrix
+Eigen::MatrixXd F_;
+
+// process covariance matrix
+Eigen::MatrixXd Q_;
+
+// measurement matrix
+Eigen::MatrixXd H_;
+
+// measurement covariance matrix
+Eigen::MatrixXd R_;
+```
+Following is the Kalman filter **Predict** function implementation.
+
+```cpp
+void KalmanFilter::Predict()
+{
+    x_ = F_ * x_;
+    MatrixXd Ft = F_.transpose();
+    P_ = F_ * P_ * Ft + Q_;
+}
+```
+
+Following is the Kalman filter **Update** function implementation.
+
+```cpp
+void KalmanFilter::Update(const VectorXd &z)
+{
+    VectorXd z_pred = H_ * x_;
+    VectorXd y = z - z_pred;
+    CommonUpdate(y);
+}
+void KalmanFilter::CommonUpdate(const VectorXd &y)
+{
+    MatrixXd Ht = H_.transpose();
+    MatrixXd S = H_ * P_ * Ht + R_;
+    MatrixXd Si = S.inverse();
+    MatrixXd PHt = P_ * Ht;
+    MatrixXd K = PHt * Si;
+
+    //new estimate
+    x_ = x_ + (K * y);
+    long x_size = x_.size();
+    MatrixXd I = MatrixXd::Identity(x_size, x_size);
+    P_ = (I - K * H_) * P_;
+}
+```
